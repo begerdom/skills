@@ -102,7 +102,10 @@ build the chosen fix, each fix with a spec proven against the unfixed state.
 
 Slow pages: measure before splitting (realistic data volume, server timings, browser long tasks).
 Move expensive parts behind `up-defer` with a loading placeholder and `up-cache="false"`, build
-collapsed tree levels lazily, avoid computing a URL per node.
+collapsed tree levels lazily, avoid computing a URL per node. Look for options the SPA loaded on
+demand (a page tree for parent selects or permissions): the server-rendered form renders them in
+full, also behind a switch that hides them and twice when two fields share them. Load them once
+they show, and pass their current values along so unsaved ones survive a failed save.
 
 ## 8. Remove every Angular mention and dead CSS
 

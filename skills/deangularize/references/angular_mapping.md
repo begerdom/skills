@@ -79,7 +79,10 @@ Three variants cover almost everything:
    onAccepted })`. Inside the overlay resolve the layer with `up.layer.get(element)`;
    `up.layer.accept()` from a plain DOM handler targets the current layer, which may be the root.
    A form of another area can render a dialog variant (`dialog: 1`) whose success response
-   accepts the layer with `{ id, flash }` instead of setting a flash.
+   accepts the layer with `{ id, flash }` instead of setting a flash. Pass the opener's current
+   choice (chosen and locked IDs) as `data` of `up.layer.open`, not as query params: the SPA kept
+   it in memory, and a few hundred IDs exceed nginx's 8 KB request line (414). Unpoly sets `data`
+   on the root of the layer's content, so the dialog's compiler belongs on that root.
 3. **Dialog only when needed** (conflict, replacement choice): link with `up-method`,
    `up-confirm`, `up-fail-layer="new" up-fail-mode="modal" up-fail-target="<dialog>"`; the server
    answers 409 with the dialog. The dialog's form carries `up-layer="root"

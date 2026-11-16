@@ -83,6 +83,11 @@ to do. Bootstrap traps are in `bootstrap_upgrade.md`, island traps in `react_isl
   to get unsafe header".
 - Navigating to the same form again sends the request before the old page released its lock; the
   server reports the own lock as foreign. Re-claim it with `up.navigate`, not a full reload.
+- A double click on a link to a form: the first request takes the lock, Unpoly aborts its response
+  for the second, and the tab never learns the new lock code. A silent re-claim with an older
+  remembered code then fails with every response and reloads until the lock expires. Let the
+  server tell the form whether its request already sent codes and show the claim dialog instead
+  of trying again; a guard that looks at the URL misses re-claims that keep it.
 
 ## 2. Server-rendered forms vs. the old JSON forms
 
@@ -95,7 +100,11 @@ and controllers were written against the JSON.
 - **Booleans arrive as `"0"`, `"1"` or `""`.** `""` is truthy in Ruby: a hidden "remove" flag
   with an empty value deleted files on every save. Cast with `ActiveModel::Type::Boolean`.
 - **IDs arrive as strings.** Key-array associations save nothing silently, validations comparing
-  integers let `"5"` pass. Cast to integers and drop the blank value that signals "remove all".
+  integers let `"5"` pass. Code that diffs them against the stored integer IDs sees every ID as
+  removed: a setter destroyed and recreated all links on each save, and a link whose `belongs_to`
+  had `dependent: :destroy` took the linked record with it (a page's sub pages). Cast to integers
+  in the model setter, not per controller: preview endpoints and other forms reach the model
+  without the controller's cast. Drop the blank value that signals "remove all".
 - **Untyped JSON stores** (`store_accessor`) would save `"1"` instead of `true`: serialize typed on
   the client or cast on the server.
 - **Missing vs. null**: the JSON omitted keys; code using `fetch(:key, default)` now gets `nil`.
@@ -227,6 +236,9 @@ and controllers were written against the JSON.
 ## 7. Process
 
 - After a rebase, grep for calls to methods upstream deleted; textual merges hide them.
+- When a change moves data between server and client (an `up-data` attribute, query params),
+  grep the request specs for the old shape. Before pushing, run every CI job locally (Brakeman
+  too), not only the specs of the area.
 - New spec files shift CI's file distribution (Knapsack); order-dependent leaks in unrelated specs
   surface on other nodes. A common leak: records created in a group-level `around` hook survive
   when DatabaseCleaner starts in a `before` hook. Investigate them separately from the migration.
