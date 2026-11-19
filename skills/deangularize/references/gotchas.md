@@ -49,6 +49,14 @@ to do. Bootstrap traps are in `bootstrap_upgrade.md`, island traps in `react_isl
   record) must carry both content locales like the server-rendered ones; otherwise switching the
   locale before the form is rendered again shows the old locale. Specs: pick, then switch the
   locale before saving or reopening.
+- **Client state that outlives navigations (on `body`, in `sessionStorage`) is unknown to the
+  markup the server renders.** The SPA's content locale switcher sat in the shell; now every page
+  renders its own, marked for the default locale. A compiler that only acts when the stored value
+  differs from `body` works after a full page load (the server resets `body`) but leaves the new
+  switcher wrong after a fragment update, where `body` already holds the stored value: the list
+  shows English, the German flag is marked. Mark new elements from the current client state on
+  every compile, the same for active tabs or toggles kept on the client. Spec: switch, follow a
+  navigation link, check the marks.
 - Dialogs hide the page scrollbar; Unpoly pads the body, but elements fixed to the right edge jump
   unless listed in `up.viewport.config.anchoredRightSelectors` (or marked `[up-fixed]`).
 - Actions whose response leaves the app and carries a flash (sign-out) must not go through
